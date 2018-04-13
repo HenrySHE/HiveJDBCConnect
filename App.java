@@ -14,6 +14,8 @@ public class App
         Class.forName("org.apache.hive.jdbc.HiveDriver");
         try{
             Connection con = DriverManager.getConnection("jdbc:hive2://localhost:10000/default","root","root");
+            //--------if you want to connect to the Hive server remotely--------
+            //Connection con = DriverManager.getConnection("jdbc:hive2://202.45.128.135:16859/default","root","root");
             PreparedStatement sta = con.prepareStatement("select * from b_results");
             ResultSet result = sta.executeQuery();
             while(result.next()){
@@ -23,7 +25,7 @@ public class App
             }
         } catch(SQLException e) {
             //e.printStackTrace();
-           System.out.println("--------------test---------------");
+           System.out.println("Some Error Happened, Connection Failed, Check whether you use CSVPN!");
         }
     }
 }
