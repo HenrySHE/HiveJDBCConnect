@@ -1,8 +1,3 @@
-# HiveJDBCConnect
-Maven Hive Project,using JDBC to connect Hive local host
-
-
-
 # Cloud Computing Project
 -------
 
@@ -197,10 +192,21 @@ sudo chown -R hduser:hadoop /opt/zookeeper-3.4.11
 sudo chown -R hduser:hadoop /opt/apache-hive-2.3.2-bin
 
 
-sh-copy-id student@student
-ssh-copy-id student@student30-x1
-
+------------------- PWD of each slaves -----------------------
 ssh -Nf -L 202.45.128.135:10959:10.42.0.195:19888 10.42.0.195
+
+ssh -Nf -L 202.45.128.135:16859:10.42.0.195:10000 10.42.0.195
+ssh -Nf -L 202.45.128.135:16959:10.42.0.195:3306 10.42.0.195
+ssh -Nf -L 202.45.128.135:17059:10.42.0.195:50070 10.42.0.195
+
+
+ ssh -Nf -L 202.45.128.135:10159:10.42.0.195:50070 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10259:10.42.0.195:8088 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10359:10.42.0.195:19888 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10459:10.42.0.195:8042 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10559:10.42.0.195:4040 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10659:10.42.0.195:18080 10.42.0.195
+ ssh -Nf -L 202.45.128.135:10759:10.42.0.195:4041 10.42.0.195
 
 -------------------Maven Project Build------------------------
 Reference Link:
@@ -398,8 +404,25 @@ test
 表明这里有个数据库叫做default，然后有一个table叫做test;
 
 4. Create Table:
-`CREATE TABLE b_results (b_price float, s_output int, t_time String) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
-OK`
+Data Format:
+t_date,t_time,b_price,s_output
+2018-04-12,13:23:32,7713.12,1
+2018-04-12,13:23:32,7713.12,1
+2018-04-12,13:23:32,7713.12,1
+2018-04-12,13:23:32,7713.12,2
+2018-04-12,13:23:33,7713.12,1
+2018-04-12,13:23:33,7713.12,2
+2018-04-12,13:23:34,7713.12,1
+2018-04-12,13:23:34,7713.12,1
+
+```
+CREATE TABLE b_results (b_price float, s_output int, t_time String) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+CREATE TABLE b_results (t_date String, t_time String, b_price float, s_output int) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+```
+
+
 
 5. Load data form local (called it `test.csv`):
 path:`/opt/apache-hive-2.3.2-bin/test.csv`
@@ -407,9 +430,15 @@ path:`/opt/apache-hive-2.3.2-bin/test.csv`
 ```
 LOAD DATA LOCAL INPATH '/opt/apache-hive-2.3.2-bin/test.csv' OVERWRITE INTO TABLE b_results;
 Loading data to table default.b_results
+
+//Load form HDFS
+LOAD DATA INPATH '/twitter_sentiment_bitcoin/student59.txt' OVERWRITE INTO TABLE b_results;
+
+//Load form HDFS
+LOAD DATA INPATH '/twitter_sentiment_bitcoin/student59.txt' INTO TABLE b_results;
 ```
 
-6. Delete table: `DROP TABLE b_results`
+6. Delete table: `DROP TABLE b_results;`
 
 7. Compile the Jar file with specifying the jar file:
 
@@ -431,7 +460,10 @@ beeline -u jdbc:hive2://localhost:10000/default -n root -p
 beeline -u jdbc:hive2://localhost:10000/ -n root -p
 ```
 beeline
- !connect jdbc:hive2://localhost:10000/default
+!connect jdbc:hive2://localhost:10000/default
+ 
+!connect jdbc:hive2://202.45.128.135:16859/default
+ (如果是要远程连接，记得使用CSVPN)
 ```
 kill -9 xxxx
 
@@ -445,12 +477,18 @@ service hive-server2 status
 
 hiveserver2 start &
 --service hiveserver2
-netstat -nl|grep 10001
+netstat -nl|grep 10000
 
 #### Start Hive Process:
 ```
-hiveserver2 start
+//后台运行
+hiveserver2 start &
 hive --service metastore &
+
+
+//监控运行：(两个都必须打开，缺一不可)
+hiveserver2 start
+hive --service metastore
 ```
 
 
@@ -469,6 +507,7 @@ Then you can see this:
     | root@localhost    |
     +-------------------+
     1 row in set (0.00 sec)
+
 ```    
 GRANT ALL PRIVILEGES ON `%`.* TO 'root'@'localhost' IDENTIFIED BY 'root' WITH GRANT OPTION;
 GRANT ALL PRIVILEGES ON `%`.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;
@@ -480,6 +519,37 @@ GRANT ALL PRIVILEGES ON `%`.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTI
 ```
 ##### mysql conf Gen:
 http://imysql.com/my-cnf-wizard.html at `/etc/mysql`
+#### mysql 配置文件详解：
+https://github.com/jaywcjlove/mysql-tutorial/blob/master/chapter2/2.5.md
+#### 远程连接mysql数据库：
+https://www.jianshu.com/p/8fc90e518e2c
 
 #### restart mysql:
-service mysql restart
+`service mysql restart`
+
+
+
+
+
+-----------------HDFS 操作-------------------
+#### HDFS 文件常用操作命令：
+https://segmentfault.com/a/1190000002672666
+hadoop fs -ls  /
+/twitter_sentiment_bitcoin
+hadoop fs -ls /twitter_sentiment_bitcoin
+hadoop fs -ls -R /twitter_sentiment_bitcoin/
+hadoop fs -cat /twitter_sentiment_bitcoin/student59.txt
+
+hdfs://student59:9000
+
+
+find file in MacOS:
+mdfind xxx
+/Library/hortonworks/hive/lib/
+
+export ODBCINI=/Library/hortonworks/hive/Setup/odbc.ini
+export ODBCINSTINI=/Library/hortonworks/hive/Setup/odbcinst.ini
+export HORTONWORKSHIVEODBCINI=/Library/hortonworks/hive/lib/universal/hortonworks.hiveodbc.ini
+
+中文版介绍：Tableau - Hive connection官方文档
+http://onlinehelp.tableau.com/current/pro/desktop/zh-cn/help.html#examples_hortonworkshadoop.html
